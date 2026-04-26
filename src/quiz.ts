@@ -354,7 +354,9 @@ export function computeScores(
     }
 
     for (const [k, delta] of Object.entries(opt.effects) as [PhilKey, number][]) {
-      const next = scores[k] + delta;
+      // Negative effects count double, per author preference.
+      const adjusted = delta < 0 ? delta * 2 : delta;
+      const next = scores[k] + adjusted;
       scores[k] = permLocked.has(k) ? Math.max(50, next) : next;
     }
   }
