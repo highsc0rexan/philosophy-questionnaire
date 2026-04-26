@@ -251,7 +251,7 @@ function Results({
               <XAxis
                 type="number"
                 domain={[-200, 200]}
-                ticks={[-200, -100, 0, 100, 200]}
+                ticks={[-100, 0, 100]}
                 stroke="#a1a1aa"
                 tick={{ fill: "#a1a1aa", fontSize: 12 }}
               />
