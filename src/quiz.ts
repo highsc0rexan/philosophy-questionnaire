@@ -131,6 +131,24 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    id: "afterlife",
+    text: "What do you believe happens after you die?",
+    options: [
+      {
+        text: "I believe in an afterlife.",
+        effects: { T: 5, E: -5, ON: -5, SK: -5, A: -5, B: 5 },
+      },
+      {
+        text: "I believe in reincarnation.",
+        effects: { T: 10, E: -5, ON: -5, SK: -5, A: -5, B: 15 },
+      },
+      {
+        text: "I believe there is nothing after death.",
+        effects: { A: 10, E: 5, ON: 15, SK: 5, B: -15 },
+      },
+    ],
+  },
+  {
     id: "objective-meaning",
     text: "Do you believe in objective meaning?",
     options: [
