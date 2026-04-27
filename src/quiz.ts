@@ -294,7 +294,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: "buttons",
-    text: "In front of you, and every other (mentally capable) person on earth, are two buttons — one red and one blue. If more than 50% of the population selects the red button, every person who selected blue will die. Pressing red ensures your own safety, but risks being partially responsible for the deaths of millions to billions of people who picked blue. Which button do you press?",
+    text: "Everyone in the world has to take a private vote by pressing a red or a blue button. If more than 50% of the population presses the blue button, everyone lives. If less than 50% of the population presses the blue button, everyone who presses the red button survives, but those who pressed the blue button die. Which button do you press?",
     options: [
       { text: "Red.", effects: { E: 10, U: -15, SK: 10, A: 15, D: 10 } },
       {
