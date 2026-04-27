@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "philosophy-questionnaire",
+  "compatibility_date": "2026-04-27",
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "philosophy-questionnaire-db",
+      "database_id": "8fbf21d7-ab52-49e0-9b54-c7d7d48df3b4"
+    }
+  ]
+}

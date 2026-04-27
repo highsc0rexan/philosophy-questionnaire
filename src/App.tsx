@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -16,10 +16,11 @@ import {
   INTRO_TEXT,
   INTRO_RELIGION,
   INTRO_RESULTS,
+  type PhilKey,
   type Question,
 } from "./quiz";
 
-type Stage = "intro" | "quiz" | "results";
+type Stage = "intro" | "quiz" | "results" | "stats";
 
 const REPO_URL = "https://github.com/highsc0rexan/philosophy-questionnaire";
 
@@ -80,7 +81,10 @@ export default function App() {
         </header>
 
         {stage === "intro" && (
-          <Intro onStart={() => { setStage("quiz"); setStep(0); }} />
+          <Intro
+            onStart={() => { setStage("quiz"); setStep(0); }}
+            onViewStats={() => setStage("stats")}
+          />
         )}
 
         {stage === "quiz" && current && (
@@ -95,7 +99,15 @@ export default function App() {
         )}
 
         {stage === "results" && (
-          <Results answers={answers} onRestart={restart} />
+          <Results
+            answers={answers}
+            onRestart={restart}
+            onViewStats={() => setStage("stats")}
+          />
+        )}
+
+        {stage === "stats" && (
+          <Stats onBack={() => setStage("intro")} />
         )}
 
         <footer className="mt-16 text-center text-xs text-zinc-500">
@@ -113,7 +125,13 @@ export default function App() {
   );
 }
 
-function Intro({ onStart }: { onStart: () => void }) {
+function Intro({
+  onStart,
+  onViewStats,
+}: {
+  onStart: () => void;
+  onViewStats: () => void;
+}) {
   return (
     <div className="space-y-6 leading-relaxed text-zinc-300">
       <p>{INTRO_TEXT}</p>
@@ -129,13 +147,23 @@ function Intro({ onStart }: { onStart: () => void }) {
         </h2>
         <p>{INTRO_RESULTS}</p>
       </div>
-      <div className="pt-2">
+      <p className="text-xs text-zinc-500 italic">
+        When you finish, your anonymous scores are saved so I can see overall averages. No name, no IP, no answers — just the 13 numbers.
+      </p>
+      <div className="pt-2 flex flex-wrap gap-3">
         <button
           type="button"
           onClick={onStart}
           className="px-5 py-3 rounded-md bg-indigo-500 hover:bg-indigo-400 text-white font-medium transition"
         >
           Start the questionnaire
+        </button>
+        <button
+          type="button"
+          onClick={onViewStats}
+          className="px-5 py-3 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium transition"
+        >
+          View overall averages
         </button>
       </div>
     </div>
@@ -209,16 +237,62 @@ function QuizScreen({
   );
 }
 
+function ScoreChart({
+  data,
+  height = 520,
+}: {
+  data: { name: string; score: number }[];
+  height?: number;
+}) {
+  return (
+    <div
+      className="w-full bg-zinc-900/60 rounded-lg p-4 border border-zinc-800"
+      style={{ height }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+        >
+          <CartesianGrid stroke="#27272a" horizontal={false} />
+          <XAxis
+            type="number"
+            domain={[-200, 200]}
+            ticks={[-100, 0, 100]}
+            stroke="#a1a1aa"
+            tick={{ fill: "#a1a1aa", fontSize: 12 }}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={140}
+            stroke="#a1a1aa"
+            tick={{ fill: "#e4e4e7", fontSize: 13 }}
+          />
+          <ReferenceLine x={0} stroke="#52525b" />
+          <Bar dataKey="score" radius={[0, 4, 4, 0]} isAnimationActive={false}>
+            {data.map((d, i) => (
+              <Cell key={i} fill={d.score >= 0 ? "#818cf8" : "#f472b6"} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function Results({
   answers,
   onRestart,
+  onViewStats,
 }: {
   answers: Record<string, number>;
   onRestart: () => void;
+  onViewStats: () => void;
 }) {
   const { scores } = useMemo(() => computeScores(answers), [answers]);
 
-  // Build chart data with full names, sorted by score descending.
   const data = useMemo(
     () =>
       PHILOSOPHIES.map((p) => ({
@@ -228,6 +302,20 @@ function Results({
     [scores],
   );
 
+  // Submit once per mount.
+  const submitted = useRef(false);
+  useEffect(() => {
+    if (submitted.current) return;
+    submitted.current = true;
+    fetch("/api/submit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scores }),
+    }).catch(() => {
+      // Silent: stats collection is non-essential for the user.
+    });
+  }, [scores]);
+
   const top = data[0];
 
   return (
@@ -235,53 +323,25 @@ function Results({
       <div>
         <h2 className="text-xl font-medium mb-1">Your results</h2>
         <p className="text-sm text-zinc-400 mb-4">
-          {top
-            ? `Strongest match: ${top.name}.`
-            : "No matches found."}
+          {top ? `Strongest match: ${top.name}.` : "No matches found."}
         </p>
 
-        <div className="w-full h-[520px] bg-zinc-900/60 rounded-lg p-4 border border-zinc-800">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
-            >
-              <CartesianGrid stroke="#27272a" horizontal={false} />
-              <XAxis
-                type="number"
-                domain={[-200, 200]}
-                ticks={[-100, 0, 100]}
-                stroke="#a1a1aa"
-                tick={{ fill: "#a1a1aa", fontSize: 12 }}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={140}
-                stroke="#a1a1aa"
-                tick={{ fill: "#e4e4e7", fontSize: 13 }}
-              />
-              <ReferenceLine x={0} stroke="#52525b" />
-              <Bar dataKey="score" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                {data.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill={d.score >= 0 ? "#818cf8" : "#f472b6"}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ScoreChart data={data} />
 
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={onRestart}
             className="px-4 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-sm"
           >
             Take it again
+          </button>
+          <button
+            type="button"
+            onClick={onViewStats}
+            className="px-4 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-sm"
+          >
+            See overall averages
           </button>
         </div>
       </div>
@@ -297,6 +357,77 @@ function Results({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface StatsResponse {
+  count: number;
+  averages: Record<PhilKey, number> | null;
+}
+
+function Stats({ onBack }: { onBack: () => void }) {
+  const [data, setData] = useState<StatsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/stats")
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<StatsResponse>;
+      })
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(String(e));
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const chartData = useMemo(() => {
+    if (!data?.averages) return [];
+    return PHILOSOPHIES.map((p) => ({
+      name: p.name,
+      score: Math.round(data.averages![p.key]),
+    })).sort((a, b) => b.score - a.score);
+  }, [data]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-medium">Overall averages</h2>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm text-zinc-400 hover:text-zinc-200"
+        >
+          ← Back
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-400">Couldn't load stats: {error}</p>
+      )}
+
+      {!error && !data && (
+        <p className="text-sm text-zinc-400">Loading…</p>
+      )}
+
+      {data && data.count === 0 && (
+        <p className="text-sm text-zinc-400">
+          No submissions yet — be the first to take it!
+        </p>
+      )}
+
+      {data && data.count > 0 && (
+        <>
+          <p className="text-sm text-zinc-400">
+            Based on <span className="text-zinc-100 font-medium">{data.count}</span>{" "}
+            {data.count === 1 ? "submission" : "submissions"}.
+          </p>
+          <ScoreChart data={chartData} />
+        </>
+      )}
     </div>
   );
 }
