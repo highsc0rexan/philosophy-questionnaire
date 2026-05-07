@@ -313,6 +313,28 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    id: "heinz",
+    text: "Heinz's wife is dying. The only drug that can save her costs $2,000 — he can only raise $1,000. The druggist refuses to negotiate. What should Heinz do?",
+    options: [
+      {
+        text: "Steal the drug — his wife's life is worth more than the law.",
+        effects: { C: 5, E: 5, S: 5, D: 5, B: 5, SK: -5, CO: -10, VT: -5 },
+      },
+      {
+        text: "Do not steal — accept his wife's death rather than break the law.",
+        effects: { CO: 10, VT: 10, U: 5, EP: 5, T: 5, C: -15, E: -10, B: -5, D: -5 },
+      },
+      {
+        text: "Steal the drug, then turn himself in to the police immediately after.",
+        effects: { S: 10, VT: 10, CO: 5, U: 5, B: 5, SK: 5, E: 5, C: -5 },
+      },
+      {
+        text: "Steal the drug, then publicly confess and challenge the druggist's pricing in court.",
+        effects: { C: 10, E: 10, ON: 5, A: 10, D: 5, U: 5, CO: -10, EP: -5, SK: 5 },
+      },
+    ],
+  },
+  {
     id: "lifeboat",
     text: "You and 9 other people are on a lifeboat. There are only enough spots for 6 people. Who should live and who should die?",
     options: [
